@@ -1,3 +1,15 @@
+# 2025 - 02 - 04
+
+## Fitting models to data; noncovalent binding interactions. 
+
+fractional saturation y: $ y = \frac{[C]}{[P]_0} = \frac{[C]}{[P] + [C]}$
+
+$ y_{eq} = \frac{[L]_{eq}}{[L]_{eq} + K_d}$ when $[L]_0 >> [P]_0, \therefore y_{eq} = \frac{[L]_0}{[L]_0 + K_d}$
+
+thus dont have to measure free ligand in solution
+
+1. choice of appropriarte binding model - 
+
 # 2026 - 02 - 02
 
 
