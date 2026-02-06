@@ -7635,7 +7635,7 @@ a.anchor-link {
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [36]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -7746,7 +7746,7 @@ Time to reach 97.5% of steady state: 276.99 minutes (4.62 hours)
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_time_to_ss</span><span class="p">(</span><span class="n">k1</span><span class="p">,</span> <span class="n">k2</span><span class="p">,</span> <span class="n">k3</span><span class="p">):</span>
@@ -7868,12 +7868,12 @@ Parameter contributing most to time-to-steady-state: k3
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [55]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Example values</span>
-<span class="n">k3_GFPm</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># 1/min (fastest GFP variant)</span>
-<span class="n">k3_inf</span> <span class="o">=</span> <span class="mf">1e6</span>    <span class="c1"># practically instantaneous</span>
+<span class="n">k3_GFPm</span> <span class="o">=</span> <span class="mf">2.9e-3</span> <span class="o">*</span> <span class="mi">60</span>  <span class="c1"># Convert from 1/s to 1/min</span>
+<span class="n">k3_inf</span> <span class="o">=</span> <span class="mf">1e6</span>           <span class="c1"># practically instantaneous</span>
 
 <span class="c1"># Time to steady state for GFPm</span>
 <span class="n">time_to_ss_GFPm</span> <span class="o">=</span> <span class="n">compute_time_to_ss</span><span class="p">(</span><span class="n">k1</span><span class="p">,</span> <span class="n">k2</span><span class="p">,</span> <span class="n">k3_GFPm</span><span class="p">)</span>
@@ -7894,7 +7894,7 @@ Parameter contributing most to time-to-steady-state: k3
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Time to 97.5% SS for GFPm (k3=0.05 1/min): 236.90 min (3.95 h)
+<pre>Time to 97.5% SS for GFPm (k3=0.174 1/min): 223.58 min (3.73 h)
 Time to 97.5% SS for theoretical infinite k3: 218.30 min (3.64 h)
 </pre>
 </div>
