@@ -7,3 +7,4 @@
 lectures/code/*
 Midterm/lit_review/*
 .*
+__pycache__

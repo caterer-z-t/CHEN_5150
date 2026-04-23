@@ -1,0 +1,363 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[a4paper, total={7in, 10in}]{geometry}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{helvet}
+\usepackage{authblk}
+\usepackage{placeins}
+\usepackage{hyperref}
+\usepackage{amsmath} 
+\usepackage{booktabs}
+\usepackage{amssymb} 
+\hypersetup{hidelinks}
+\usepackage{orcidlink} 
+\usepackage[super,comma,sort&compress]  
+   {natbib}\bibliographystyle{numbered}
+\usepackage[right]{lineno} \linenumbers
+
+
+\makeatletter
+\renewcommand{\maketitle}{\bgroup\setlength{\parindent}{0pt}
+\begin{flushleft}
+  \textbf{\@title}
+  
+  \@author
+\end{flushleft}\egroup}
+\makeatother
+
+\title{\Large An Ordinary Differential Equations Framework for Lipoprotein(a) Expression Dynamics as a Function of Copy Number Variation Length}
+\date{}
+
+\author[1,2,* \orcidlink{0000-0001-9019-0730}]{Zachary Caterer}
+
+\affil[1]{Department of Chemical and Biological Engineering, University of Colorado Boulder, Boulder CO, USA}
+\affil[2]{Department of Biomedical Informatics, University of Colorado Anschutz, Aurora, CO, USA}
+
+\affil[*]{Correspondence: ztcaterer@colorado.edu}
+
+\begin{document}
+\sloppy
+
+\maketitle
+
+\section*{ABSTRACT}
+
+Lipoprotein(a) [Lp(a)] is a highly atherogenic, prothrombotic, and proinflammatory lipoprotein with well-established causal associations with cardiovascular disease (CVD). A defining structural feature of Lp(a) is apolipoprotein(a) [apo(a)], encoded by the \textit{LPA} gene, which contains a Kringle IV Type 2 (KIV-2) variable number tandem repeat (VNTR) ranging from 1 to $>$40 copies. This polymorphism accounts for a substantial fraction of inter-individual variation in circulating Lp(a), with shorter isoforms consistently associated with higher plasma levels. Kinetic tracer studies have demonstrated that this inverse relationship is driven by isoform-dependent differences in hepatic production rate rather than fractional catabolic rate, yet the intracellular mechanisms linking KIV-2 repeat length to production remain unresolved. Here, we develop a mechanistic ordinary differential equation (ODE) model of apo(a) biosynthesis that explicitly links KIV-2 repeat number to transcription, translation, endoplasmic reticulum (ER) processing, ER-associated degradation (ERAD), and secretion, with the objective of identifying the rate-limiting intracellular steps that encode the inverse KIV-2/Lp(a) relationship.The model incorporates isoform-length-dependent delays in transcription and translation, length-dependent ER folding kinetics, and ERAD as a function of ER residence time. Parameters are initialized from published kinetic and biochemical measurements, and a Bayesian inference framework is used to estimate poorly constrained parameters using isoform-specific secretion data. The model recapitulates the empirically observed inverse relationship between KIV-2 repeat number and circulating Lp(a) and identifies ER processing and degradation as dominant rate-limiting steps. Sensitivity analyses further reveal regimes in which ERAD saturation produces nonlinear or threshold-like behavior. This framework provides a quantitative mechanistic bridge between \textit{LPA} genetic variation and Lp(a) production, offering new insight into the intracellular determinants of Lp(a) metabolism and their relevance to cardiovascular risk.
+
+\section*{KEYWORDS}
+
+Lipoprotein(a) (Lp(a)),
+Kringle IV-2 Variable Nucleotide Tandem Repeat,
+\textit{LPA} gene,
+Apolipoprotein(a) (apo(a)),
+Endoplasmic reticulum (ER) trafficking,
+ER-associated degradation (ERAD),
+Cardiovascular disease (CVD) risk
+
+\newpage
+
+\section{INTRODUCTION}
+
+Lipoprotein(a) [Lp(a)] is a highly atherogenic lipoprotein particle consisting of a low-density lipoprotein (LDL)-like lipid core covalently bound to apolipoprotein(a) [apo(a)], a large glycoprotein encoded by the \textit{LPA} gene \citep{tsimikas2012lipoprotein,lamon1991nhlbi,reyes2022lipoprotein}. Elevated plasma Lp(a) is an independent, causal risk factor for atherosclerotic cardiovascular disease\citep{reyes2022lipoprotein}, ischemic stroke\citep{nave2015lipoprotein}, and calcific aortic valve disease\citep{stewart1997clinical}, with causal associations established through Mendelian randomization studies\citep{kamstrup2009genetically,clarke2009genetic,coassin2019comprehensive}. Plasma Lp(a) concentrations vary more than 1,000-fold across individuals, where this variation is overwhelmingly genetically determined ($>$70\% heritable) \citep{tsimikas2012lipoprotein,graham2016antisense}.
+
+The primary genetic determinant of circulating Lp(a) is the Kringle IV Type 2 (KIV-2) variable number tandem repeat (VNTR) within \textit{LPA}, which ranges from 1 to $>$40 copies per haploid and accounts for 40--70\% of inter-individual variance in plasma Lp(a) depending on ancestry \citep{schmidt2016structure,utermann1987lp}. KIV-2 copy number is inversely correlated with plasma Lp(a), such that individuals carrying short isoforms (few KIV-2 repeats) have substantially higher circulating Lp(a) than those with long isoforms\citep{mukamel2021protein}. The mechanistic basis of this relationship was clarified by the radiolabeled kinetic tracer studies of Rader et al. \citep{rader1993variation,rader1994inverse}, which demonstrated that isoform-size differences in circulating Lp(a) arise from differences in hepatic apo(a) production rate, rather than the historical hypothesis of fractional clearance. Smaller isoforms are produced at rates more than twice those of larger isoforms \citep{rader1994inverse}, while larger isoforms are disproportionately degraded intracellularly\citep{rader1993variation}. These observations implicate endoplasmic reticulum (ER) retention and ER-associated degradation (ERAD) as the primary regulatory bottleneck governing apo(a) secretion \citep{rader1993variation,rader1994inverse, white1994intracellular, white1994molecular}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/‎fig_intro.png}
+    \caption{\textit{Mechanistic ODE model of intracellular apo(a) biosynthesis and assembly into Lp(a)}. Schematic representation of the four-compartment model, detailing the processes from \textit{LPA} gene transcription in the nucleus, translation by ribosomes, ER processing (folding/glycosylation and ERAD-mediated degradation), to final Lp(a) particle assembly in the extracellular space.}
+    \label{fig:intro}
+\end{figure}
+
+Each KIV-2 repeat encodes a structurally similar kringle domain requiring three invariant disulfide bonds, N-linked glycosylation, and chaperone-assisted folding before ER export \citep{schmidt2016structure}. Longer isoforms therefore accumulate proportionally greater ER dwell time and ERAD exposure\citep{white1994intracellular, white1994molecular}. Additionally, \textit{LPA} transcript length scales directly with KIV-2 copy number, meaning that both transcription and translation rates introduce upstream lags that may independently modulate steady-state intracellular apo(a) levels \citep{white1994molecular, white1994intracellular}. Despite this mechanistic evidence, no quantitative model of the full apo(a) biosynthetic pathway has been developed, in part because the continuous, parametric dependence of isoform length on KIV-2 copy number $n$ has not been exploited as a modeling parameter. A minimal ODE framework is deliberately chosen here because closed-form steady-state solutions allow direct analytical decomposition of the isoform-length dependence into separable rate contributions, enabling parameter identifiability analysis and Bayesian inference that would be computationally intractable in higher-complexity models.
+
+This paper addresses that gap by developing a four-compartment ODE model of apo(a) biosynthesis, ER processing, and secretion parameterized as an explicit function of KIV-2 repeat number $n$ (Figure \ref{fig:intro}). The model tracks: (1) transcription, at a rate that decreases with $n$ due to proportionally longer \textit{LPA} nascent-mRNA; (2) translation, with a co-translational delay in ER entry scaling with $n$; (3) ER folding, glycosylation, and post-translational modification, modeled as a length-dependent first-order processing rate; and (4) ERAD-mediated degradation modeled as an exponential function of $n$. For poorly constrained ERAD kinetics, we employ a Bayesian inference framework to estimate posterior distributions conditioned on isoform-specific production rate data from Rader et al. \citep{rader1994inverse}. We derive closed-form steady-state solutions and demonstrate that: (1) the inverse KIV-2/Lp(a) relationship is recapitulated by a single exponential ERAD term with per-repeat susceptibility $\lambda$; (2) ER secretion efficiency falls below 50\% by $n = 14$ and below 10\% at $n = 40$, identifying ERAD as the dominant isoform-length-dependent bottleneck; and (3) local sensitivity analysis confirms that $\lambda$ is the single parameter most responsible for isoform-length variation in plasma Lp(a), with superlinear amplification at large $n$ that no upstream synthesis parameter can replicate.
+
+\section{METHODS}
+
+\subsection{Model Overview}
+\label{sec:overview}
+
+We developed a deterministic ordinary differential equation (ODE) model of hepatic apo(a) biosynthesis consisting of four compartments: \ref{eq:1}. cytoplasmic mRNA ($M$), \ref{eq:2}. ER-resident apo(a) protein ($E$), \ref{eq:3}. secreted extracellular apo(a) ($S$), and \ref{eq:4}. circulating plasma Lp(a) ($P$). All rate parameters are expressed as explicit functions of KIV-2 copy number $n \in \{1, \ldots, 40\}$. A schematic of the model is shown in Figure \ref{fig:intro}. The system is:
+
+\begin{equation}\label{eq:1}
+    \frac{dM}{dt} = k_{tx}(n) - k_{deg,m} \cdot M
+\end{equation}
+
+\begin{equation} \label{eq:2}
+    \frac{dE}{dt} = k_{tl}(n) \cdot M - k_{fold}(n) \cdot E - k_{ERAD}(n) \cdot E
+\end{equation}
+
+\begin{equation} \label{eq:3}
+    \frac{dS}{dt} = k_{fold}(n) \cdot E - k_{assem}(n) \cdot S - k_{deg,S} \cdot S    
+\end{equation}
+
+
+\begin{equation} \label{eq:4}
+    \frac{dP}{dt} = k_{assem}(n) \cdot S - k_{cl} \cdot P
+\end{equation}
+
+\subsection{Rate Functions} \label{sec:rate-fns}
+
+The transcription rate $k_{tx}(n)$ is derived from RNA polymerase II elongation kinetics. The \textit{LPA} gene contains approximately 90 kb\citep{schmidt2016structure, mclean1987cdna} of fixed non-KIV-2 sequence and 5.5 kb per KIV-2 repeat\citep{mclean1987cdna}. At an elongation rate of 40 nt/s,\citep{jonkers2015getting} the time required to transcribe one KIV-2 repeat equivalent is $(5500 \text{ nt}) / (40 \text{ nt/s}) = 137.5$ s. Defining $N_{0,tx} = 90\text{ kb} / 5.5\text{ kb} \approx 16.4$ repeat-equivalents of fixed sequence, the rate-limiting elongation time scales as $N_{0,tx} + n$, giving:
+
+\begin{equation} \label{eq:5}
+    k_{tx}(n) = \frac{\alpha_{tx}}{N_{0,tx} + n}, \quad \alpha_{tx} = \frac{40 \text{ nt/s} \times 3600 \text{ s/hr}}{5500 \text{ nt}} \approx 26.2 \text{ hr}^{-1}
+\end{equation}
+
+Similarly, translation rate $k_{tl}(n)$ per mRNA molecule is limited by ribosome transit time. Each kringle domain is approximately 80 amino acids\citep{schmidt2016structure}; the fixed non-KIV-2 portion of apo(a) contains 11 kringle-equivalent domains (KIV1, KIV3--10, KV, and the protease domain)\citep{coassin2022lipoprotein}. With 5 ribosomes per mRNA (polysome) and an elongation rate of 4 aa/s\citep{ingolia2011ribosome}:
+
+\begin{equation} \label{eq:6}
+    k_{tl}(n) = \frac{\alpha_{tl}}{N_{0,prot} + n}, \quad \alpha_{tl} = \frac{5 \times 4 \text{ aa/s} \times 3600 \text{ s/hr}}{80 \text{ aa}} = 900 \text{ hr}^{-1}
+\end{equation}
+
+ER processing requires co-translational folding, disulfide bond formation (3 per kringle), N-linked glycosylation, and chaperone cycling for each of the $n$ KIV-2 kringle domains. Modeling these steps as occurring sequentially, the total processing rate decreases inversely with isoform length:
+
+\begin{equation}\label{eq:7}
+    k_{fold}(n) = \frac{k_{fold,0}}{n}
+\end{equation}
+
+The base rate $k_{fold,0} = 2.0$ hr$^{-1}$ was calibrated to yield an ER residence time of approximately 4 hours at $n = 8$, consistent with hepatocyte apo(a) secretion kinetic experiments \citep{white1994molecular}.
+
+ERAD rate is modeled as exponentially increasing with $n$, reflecting the per-kringle probability of misfolding or chaperone escape that triggers proteasomal targeting:
+
+\begin{equation}\label{eq:8}
+    k_{ERAD}(n) = k_e \cdot e^{\lambda n}
+\end{equation}
+
+where $k_e$ is the baseline ERAD rate constant and $\lambda$ is the per-repeat exponential scaling coefficient. Both parameters were estimated via Bayesian inference (Section \ref{sec:bay}).
+
+Assembly of secreted apo(a) into Lp(a) particles requires covalent disulfide linkage to LDL-apoB. Very short isoforms lack sufficient kringle scaffold to productively present the Cys-4057 binding interface, introducing a structural threshold that we model as a Hill function:
+
+\begin{equation}\label{eq:9}
+    k_{assem}(n) = k_{assem,max} \cdot \frac{(n/K_n)^h}{1 + (n/K_n)^h}
+\end{equation}
+
+with $K_n = 8$ repeats (half-maximal assembly at $n = 8$, consistent with the empirical attenuation of the KIV-2/Lp(a) relationship below $n \approx 12$ in Mukamel et al. \citep{mukamel2021protein}) and Hill coefficient $h = 3$ reflecting cooperative structural threshold behavior.
+
+\subsection{Steady-State Solutions}
+
+Setting all time derivatives to zero yields closed-form steady-state expressions. Defining two composite efficiency terms:
+
+\begin{equation}\label{eq:10}
+    \eta_{ER}(n) = \frac{k_{fold}(n)}{k_{fold}(n) + k_{ERAD}(n)}, \qquad \eta_a(n) = \frac{k_{assem}(n)}{k_{assem}(n) + k_{deg,S}}
+\end{equation}
+
+the steady states are:
+
+\begin{align}
+M_{ss} &= \frac{k_{tx}(n)}{k_{deg,m}},\label{eq:11} \\
+E_{ss} &= \frac{k_{tl}(n) \cdot M_{ss}}{k_{fold}(n) + k_{ERAD}(n)}, \label{eq:12}\\
+S_{ss} &= \frac{k_{fold}(n) \cdot E_{ss}}{k_{assem}(n) + k_{deg,S}}, \label{eq:13}\\
+P_{ss} &= \frac{k_{assem}(n) \cdot S_{ss}}{k_{cl}} \label{eq:14}
+\end{align}
+
+Plasma Lp(a) at steady state can be written compactly as:
+
+\begin{align} \label{eq:15}
+    P_{ss}(n) = \frac{k_{tx}(n) \cdot k_{tl}(n)}{k_{deg,m}} \cdot \frac{\eta_{ER}(n)}{k_{fold}(n) + k_{ERAD}(n)} \cdot \frac{\eta_a(n)}{k_{assem}(n) + k_{deg,S}} \cdot \frac{k_{assem}(n)}{k_{cl}}
+\end{align}
+
+Model predictions were normalized to the $n = 14$ isoform to match the Rader et al. 1994 \citep{rader1994inverse} convention.
+
+\subsection{Bayesian Parameter Estimation}\label{sec:bay}
+
+The ERAD parameters $\lambda$ and $k_{fold,0}$ were estimated by Bayesian inference conditioned on the isoform-specific production rate data of Rader et al. \citep{rader1994inverse} (4 data points at $n = 7, 14, 20, 26$, expressed as production rates relative to $n = 14$). Weakly informative truncated normal priors were specified:
+
+\begin{equation}\label{eq:16}
+    \lambda \sim \text{TruncNormal}(\mu=0.07,\, \sigma=0.04,\, [0.01, 0.25])
+\end{equation}
+
+\begin{equation} \label{eq:17}
+    k_{fold,0} \sim \text{TruncNormal}(\mu=2.0,\, \sigma=1.0,\, [0.2, 8.0])
+\end{equation}
+
+A Gaussian likelihood was used with observed standard errors from Rader et al. as $\sigma$. Posterior sampling was performed using PyMC (v5)\citep{pymc2023} with the No-U-Turn Sampler (NUTS)\citep{hoffman2014no} sampler: 4 chains, 1000 tuning steps, 2000 draws per chain, target acceptance rate 0.92. Posterior predictive credible envelopes were generated from 500 draws sampled without replacement.
+
+\subsection{Goodness-of-Fit Assessment}
+
+To quantify agreement between the prior model and the Rader et al. \citep{rader1994inverse} production rate observations, a chi-squared goodness-of-fit statistic was computed at the prior point-estimate parameters:
+
+\begin{equation} \label{eq:18}
+    \chi^2 = \sum_{i=1}^{N} \frac{(y_i - \hat{y}_i)^2}{\sigma_i^2}
+\end{equation}
+
+where $y_i$ are the observed production rates (normalized to $n = 14$), $\hat{y}_i = P_{ss}(n_i) / P_{ss}(14)$ are the corresponding model predictions, and $\sigma_i$ are the approximate standard errors digitized from Rader et al. The statistic was evaluated at $N = 4$ data points ($n = 7, 14, 20, 26$) with $\nu = N - 1 = 3$ degrees of freedom (one normalization constraint). A p-value was obtained from the upper tail of the $\chi^2(\nu)$ distribution. This pre-posterior fit serves as a baseline for assessing how much the Bayesian update improves agreement; the posterior predictive fit is characterized separately by the 50\% and 95\% credible envelopes described in Section 2.4.
+
+
+\subsection{Sensitivity Analysis}
+
+Normalized local sensitivity coefficients were computed for all 13 model parameters $\{k_i\}$ across the full KIV-2 range $n = 1$--$40$ using symmetric finite differences:
+
+\begin{equation} \label{eq:19}
+    S(Y;\, k_i) = \frac{\partial \ln Y}{\partial \ln k_i} \approx \frac{Y(k_i^+) - Y(k_i^-)}{(\Delta k_i / k_i) \cdot Y(k_i^0)}
+\end{equation}
+
+with $\Delta k_i / k_i = 10\%$. Sensitivity was computed for three outputs: plasma Lp(a) $P_{ss}(n)$, ER apo(a) load $E_{ss}(n)$, and ER secretion efficiency $\eta_{ER}(n)$, evaluated at posterior median parameter values.
+
+\subsection{Computational Implementation}
+
+All analyses were implemented in Python. The ODE system was integrated using \\ \texttt{scipy.integrate.solve\_ivp} (Dormand-Prince RK45 adaptive solver) from the SciPy library \citep{2020SciPy-NMeth}. Closed-form steady-state solutions were evaluated directly in NumPy \citep{harris2020array} without numerical integration wherever possible.
+
+Bayesian inference was performed using PyMC \citep{pymc2023}, which uses PyTensor as its computational backend for automatic differentiation and gradient computation. The No-U-Turn Sampler (NUTS) \citep{hoffman2014no} was used for all posterior sampling; convergence was assessed via the Gelman-Rubin statistic ($\hat{R} < 1.01$ for all parameters) and effective sample size diagnostics computed using ArviZ \citep{Martin2026}. The PyMC model was specified symbolically using PyTensor tensor operations (\texttt{pytensor.tensor}) to allow gradient-based sampling through the closed-form $P_{ss}(n)$ expression; observed data were passed as fixed NumPy arrays. Posterior predictive envelopes were generated by evaluating the steady-state model at 500 parameter draws sampled without replacement from the flattened 4-chain posterior using \texttt{numpy.random.default\_rng}.
+
+Local sensitivity coefficients were computed using symmetric finite differences (Section 2.5) evaluated at posterior median parameters, with all 13 sensitivity matrices stored as NumPy arrays of shape $(13 \times 40)$. Prior predictive samples for marginal distribution visualization were drawn from truncated normal distributions using \texttt{scipy.stats.truncnorm}. Figures were generated with Matplotlib \citep{Hunter:2007} using the \texttt{ggplot} style with custom transparency and spine settings; heatmaps used a custom diverging colormap constructed via \texttt{matplotlib.colors.LinearSegmentedColormap}. All output figures were saved at 300 DPI with transparent backgrounds.
+
+\subsection{Model Parameters}
+
+\begin{table}[ht]
+\centering
+\caption{Model parameters, value, units, and source.}
+\begin{tabular}{llll}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Units} & \textbf{Source} \\
+\midrule
+$\alpha_{tx}$      & 26.18              & hr$^{-1}$         & \textit{LPA} gene 5.5 kb/repeat \citep{mclean1987cdna}; RNAP 40 nt/s \citep{jonkers2015getting} \\
+$N_{0,tx}$         & 16.36              & ---               & \textit{LPA} fixed sequence $\approx$90 kb \citep{mclean1987cdna,schmidt2016structure} \\
+$k_{deg,m}$        & 0.1155             & hr$^{-1}$         & mRNA $t_{1/2} = 6$ hr \citep{sharova2009database} \\
+$\alpha_{tl}$      & 900                & hr$^{-1}$         & 4 aa/s ribosome elongation \citep{ingolia2011ribosome}; 80 aa/kringle \citep{schmidt2016structure} \\
+$N_{0,prot}$       & 11                 & ---               & KIV1, KIV3--10, KV, protease domain \citep{schmidt2016structure} \\
+$k_{fold,0}$       & posterior median   & hr$^{-1}$         & Bayesian; prior informed by HepG2 ER kinetics \citep{white1994molecular} \\
+$k_e$              & 0.10               & hr$^{-1}$         & Calibrated \\
+$\lambda$          & posterior median   & repeat$^{-1}$     & Bayesian fit to production rates \citep{rader1994inverse} \\
+$k_{assem,max}$    & 3.0                & hr$^{-1}$         & Calibrated \\
+$K_n$              & 8.0                & repeats           & Empirical attenuation $n \approx 12$\ \quad \citep{mukamel2021protein} \\
+$h$                & 3.0                & ---               & Calibrated \\
+$k_{deg,S}$        & 1.5                & hr$^{-1}$         & Calibrated \\
+$k_{cl}$           & 0.01333            & hr$^{-1}$         & FCR = 0.32 d$^{-1}$ \ \quad \citep{rader1994inverse} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{RESULTS}
+
+
+\subsection{The four-compartment ODE model recapitulates the inverse KIV-2/Lp(a) relationship}
+
+To mechanistically link KIV-2 copy number to circulating Lp(a), we constructed a four-compartment ODE system tracking cytoplasmic mRNA ($M$, Eq. \ref{eq:1}), ER-resident apo(a) ($E$, Eq. \ref{eq:2}), secreted extracellular apo(a) ($S$, Eq. \ref{eq:3}), and plasma Lp(a) ($P$, Eq. \ref{eq:4}), where all rate parameters are explicit functions of repeat number $n$. Transcription (Eq. \ref{eq:5}) and translation (Eq. \ref{eq:6}) rates decrease with $n$ due to proportionally longer \textit{LPA} pre-mRNA and ribosome transit time, respectively. ER folding rate (Eq. \ref{eq:7}) decreases inversely with isoform length, reflecting sequential co-translational processing of each kringle domain; and ERAD rate (Eq. \ref{eq:8}) increases exponentially with $n$, reflecting the compounding per-repeat probability of misfolding and proteasomal targeting. Plasma Lp(a) production further depends on isoform-length-dependent assembly with LDL-apoB, modeled as a Hill function saturating above $n \approx 8$ repeats (Eq. \ref{eq:9}).
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/fig1_pss_vs_n.png}
+    \caption{
+    \textit{Steady-state model behavior across KIV-2 repeat number.} (a) Normalized plasma Lp(a) $P_{ss}(n)/P_{ss}(14)$ versus KIV-2 copy number, compared to allele-specific production rates from Rader et al. \citep{rader1994inverse} (gray squares $\pm$ SEM; $\chi^2_{(3)} = .34$, $p = 0.951$). (b) ER secretion efficiency $\eta_{ER}(n)$. (c) Assembly efficiency $\eta_a(n)$. (d) Normalized ER apo(a) load $E_{ss}(n)/E_{ss}(14)$ on a log scale.
+    }
+    \label{fig:1}
+\end{figure}
+
+As a first test of model validity, we evaluated steady-state plasma Lp(a) $P_{ss}(n)$ across the physiological KIV-2 range ($n = 1$--$40$) at calibrated prior parameter values and compared the normalized predictions to allele-specific apo(a) production rate data from Rader et al. \citep{rader1994inverse} (Figure \ref{fig:1}a). The model reproduces the empirically observed inverse relationship across isoforms spanning $n = 7$ to $n = 26$. A pre-posterior goodness-of-fit test at the four Rader 1994 reference isoforms ($n = 7, 14, 20, 26$) yielded $\chi^2_{(3)} = 0.34$ ($p = 0.951$), indicating that the prior parameterization is already consistent with the observed production rate gradient. The inverse trend is well-approximated as log-linear over the physiological range $n = 12$--$24$, consistent with the log-linear regime described by Mukamel et al. \citep{mukamel2021protein}.
+
+Panel b of Figure \ref{fig:1} shows ER secretion efficiency (Eq. \ref{eq:10}), which falls from near-unity at $n = 1$ to below 10\% at $n = 40$. This steep decline identifies the ER processing/ERAD as the dominant isoform-length-dependent bottleneck in apo(a) production. By $n \approx 14$, fewer than half of synthesized apo(a) molecules escape ERAD, quantitatively consistent with the hepatocyte pulse-chase secretion kinetics reported by White et al. \citep{white1994molecular}. Assembly efficiency $\eta_a(n)$ (Figure \ref{fig:1}c) rises steeply from near-zero at $n = 1$ to a plateau near 66\% above $n \approx 13$, governed by the Hill function with $K_n = 8$ repeats. This component contributes an additional length-dependent attenuation at short isoforms, but is not the primary driver of the inverse relationship for $n > 12$. Conversely, ER apo(a) load $E_{ss}(n)$ (Figure \ref{fig:1}d) increases exponentially with $n$, rising more than 100-fold from $n = 1$ to $n = 40$. This accumulation reflects the imbalance between slowed folding and exponentially increasing ERAD flux, and predicts that longer isoforms impose disproportionately greater ER proteostatic burden on hepatocytes despite producing less circulating Lp(a).
+
+\subsection{Bayesian inference constrains ERAD kinetics and reveals posterior predictive uncertainty}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/fig2_prior_posterior_comparison.png}
+    \caption{
+    \textit{Bayesian prior-to-posterior for ERAD kinetics and model predictions.} (a) Marginal distributions for $\lambda$ (ERAD per-repeat susceptibility, hr$^{-1}$~repeat$^{-1}$); dashed vertical line indicates prior point estimate; solid vertical line indicates posterior median; shaded band shows posterior 95\% credible interval. (b) Marginal distributions for $k_{fold,0}$ (ER folding rate constant, hr$^{-1}$); same conventions as (a). (c) Joint 2D posterior density for $(\lambda,\, k_{fold,0})$; star indicates prior point estimate; diamond indicates posterior median. (d) Normalized plasma Lp(a) $P_{ss}(n)/P_{ss}(14)$ versus KIV-2 copy number; dashed line shows prior model; solid line shows posterior median model; shaded bands show posterior 50\% and 95\% credible envelopes; gray points show Rader 1994 production rate data ($\pm$ SEM). (e) ERAD rate $k_{ERAD}(n) = k_e \cdot e^{\lambda n}$ on a log scale; dashed line shows prior, solid line shows posterior median, shaded band shows posterior 95\% credible interval propagated across 500 posterior draws. (f) ER secretion efficiency $\eta_{ER}(n)$ [\%]; same conventions as (e). All posterior results are based on 4 chains $\times$ 2000 NUTS draws ($\hat{R} < 1.01$), conditioned on isoform-specific production rate data from Rader et al.\citep{rader1994inverse} at $n = 7, 14, 20, 26$.
+    }
+    \label{fig:2}
+\end{figure}
+
+Conditioning on the four isoform-specific production rate observations from Rader et al.  \citep{rader1994inverse} yielded well-converged posteriors for both $\lambda$ and  $k_{fold,0}$ ($\hat{R} < 1.01$ for all parameters across 4 chains $\times$ 2000 draws).  The posterior for $\lambda$ shifted downward from the prior center of 0.07 repeat$^{-1}$  with substantially reduced variance (Figure \ref{fig:2}a), identifying it as the  better-constrained of the two parameters. The posterior for $k_{fold,0}$ remained  consistent with the prior mean of 2.0 hr$^{-1}$ but with tightened credible bounds  (Figure \ref{fig:2}b), consistent with the ER residence times observed in HepG2  pulse-chase experiments \citep{white1994molecular}. The joint posterior for $(\lambda,\,  k_{fold,0})$ showed only modest correlation between the two parameters (Figure  \ref{fig:2}c), indicating that the production rate data are sufficient to partially  separate their effects despite the small number of observations.
+
+The prior model already provided an acceptable fit to the Rader 1994 data  ($\chi^2_{(3)} = 0.35$, $p = 0.951$), and the posterior median model maintained this agreement ($\chi^2_{(3)} = 1.74$, $p = 0.628$), confirming that the Bayesian update improved parameter precision without distorting the model's ability to reproduce the  observed production rate gradient (Figure \ref{fig:2}d). The posterior predictive 95\%  credible envelope encompassed all four data points, and the 50\% envelope spanned approximately 0.3 log-units, comparable to the reported standard errors of the Rader observations across the physiological KIV-2 range.
+
+Propagating the posterior through the underlying rate functions revealed that uncertainty  in $\lambda$ translates most strongly to uncertainty in $k_{ERAD}(n)$ at large $n$, where  the exponential form amplifies small parameter differences into large rate differences  (Figure \ref{fig:2}e). Correspondingly, the posterior narrowed the credible band on ER  secretion efficiency $\eta_{ER}(n)$ most substantially at intermediate repeat numbers  ($n = 10$--$25$), the range most directly constrained by the Rader observations (Figure  \ref{fig:2}f). At $n = 40$, the posterior 95\% credible interval on $\eta_{ER}$ remained  wide, reflecting the absence of experimental data at long isoform lengths and the  compounding uncertainty introduced by the exponential ERAD model at the extremes of the  physiological range.
+
+\subsection{Sensitivity analysis identifies ERAD parameters as the dominant regulators of Lp(a) production}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/fig3_sensitivity_heatmap.png}
+    \caption{\textit{Normalized local sensitivity heatmaps.} Sensitivity coefficients $S(Y; k_i)$ for (a) plasma Lp(a) $P_{ss}$, (b) ER apo(a) load $E_{ss}$, and (c) ER secretion efficiency $\eta_{ER}$, evaluated at posterior median parameters. Warm colors indicate positive sensitivity; cool colors indicate negative sensitivity. KIV-2 copy number on the x-axis; model parameters on the y-axis.}
+\label{fig:3}
+\end{figure}
+
+To determine which model parameters most strongly regulate each model output, we computed normalized local sensitivity coefficients (Eq. \ref{eq:19}) for all 13 parameters across $n = 1$--$40$ using symmetric 10\% finite differences at posterior median parameter values. Sensitivity was assessed for three outputs: (a) plasma Lp(a) ($P_{ss}$), (b) ER apo(a) load ($E_{ss}$), and (c) ER secretion efficiency ($\eta_{ER}$).
+
+The resulting sensitivity heatmaps (Figure \ref{fig:3}) reveal a consistent pattern such that $\lambda$ (ERAD per-repeat susceptibility) is one of strongest negative determinants across the board, with sensitivity coefficients exceeding $|S| > 1$ across most of the KIV-2 range and rising steeply at large $n$ (Fig. \ref{fig:3}). The folding rate constant $k_{fold,0}$ exerts a positive influence on $P_{ss}$ and $\eta_{ER}$ of similar magnitude. In contrast, parameters governing upstream synthesis ($\alpha_{tx}$, $\alpha_{tl}$, $k_{deg,m}$) and plasma clearance ($k_{cl}$) maintain near-constant unit sensitivity coefficients across all $n$, as expected from their role as linear scaling factors in the closed-form steady-state expressions. Assembly parameters ($k_{assem,max}$, $K_n$, $h$) produce their largest $P_{ss}$ sensitivity at low $n$ (below the Hill function transition), and their influence on $\eta_{ER}$ is negligible. Together, these results confirm that the isoform-length dependence of Lp(a) production is predominantly encoded in the ERAD kinetics ($\lambda$, $k_e$) and the ER processing rate ($k_{fold,0}$), with upstream transcription and translation contributing proportional but length-insensitive scaling.
+
+\section{DISCUSSIONS \& CONCLUSIONS}
+
+\subsection{Mechanistic Interpretation of the Inverse KIV-2/Lp(a) Relationship}
+
+The four-compartment ODE model developed here recapitulates the empirically observed inverse relationship between KIV-2 copy number and circulating Lp(a) using rate functions grounded in the physical biochemistry of the \textit{LPA} locus. The key mechanistic insight is that this relationship is not the product of any single rate-limiting step, but rather the compounded effect of three isoform-length-dependent processes acting in series: (1) decreased transcription and translation efficiency at larger $n$, (2) slower ER folding due to the proportionally greater number of kringle domains requiring sequential co-translational processing, and (3) exponentially increasing ERAD flux that disproportionately degrades longer isoforms before secretion. Of these, ER processing and ERAD together account for the dominant isoform-length dependence: by $n = 14$, the model predicts that fewer than 50\% of synthesized apo(a) molecules escape ERAD ($\eta_{ER} < 0.5$), a figure quantitatively consistent with the intracellular degradation fractions inferred from the HepG2 pulse-chase experiments of White et al. \citep{white1994molecular}. In contrast, transcription and translation contribute only a modest, approximately linear attenuation across the KIV-2 range, as their sensitivity coefficients remain near unity regardless of $n$ (Figure \ref{fig:3}).
+
+This mechanistic decomposition has a direct parallel in the kinetic tracer literature. Rader et al. \citep{rader1994inverse} showed that the $\sim$12-fold difference in plasma Lp(a) between the S1 ($n \approx 7$) and S4 ($n \approx 26$) isoforms is driven entirely by differences in hepatic production rate, with fractional catabolic rate statistically indistinguishable across isoforms. The present model reproduces this production rate gradient while providing an explicit intracellular mechanism that the tracer studies themselves could not resolve. Importantly, the model correctly assigns the production rate differences to ER processing rather than upstream synthesis, consistent with the molecular evidence that secretion-competent apo(a) is rate-limited by ER quality control rather than by transcription \citep{white1994molecular,rader1993variation, white1994intracellular, rader1994inverse}.
+
+\subsection{ERAD Kinetics are the Dominant Regulator of Isoform-Length-Dependent 
+Lp(a) Production}
+
+The sensitivity heatmaps (Figure \ref{fig:3}) identify $\lambda$, the per-repeat ERAD susceptibility coefficient, as the single most influential parameter in the model. Its normalized sensitivity coefficient for plasma Lp(a) exceeds $|S(P_{ss};\, \lambda)| > 1$ across most of the physiological KIV-2 range and rises steeply at large ($n >15$) isoforms, meaning that a given fractional change in $\lambda$ produces a proportionally larger change in $P_{ss}$ for long isoforms than for short ones. This behavior arises directly from the exponential ERAD model (Eq. \ref{eq:8}), even a small increase in the per-repeat misfolding probability $\lambda$ is multiplied across every kringle domain in the stack, producing compounding reductions in secretion efficiency that grow with isoform length. No other parameter in the model exhibits this isoform-length-dependent amplification. To illustrate the practical magnitude: at $n = 26$, a 10\% increase in $\lambda$ produces approximately a 26\% decrease in $P_{ss}$, corresponding to a sensitivity coefficient $S(P_{ss};\, \lambda) \approx -2.6$. By contrast, a 10\% increase in $\alpha_{tx}$ produces exactly a 10\% increase in $P_{ss}$ at all $n$, giving $S(P_{ss};\, \alpha_{tx}) = +1.0$ throughout. This roughly 2.6-fold difference in sensitivity magnitude at $n = 26$, and the fact that it grows with $n$, means that genetic or environmental perturbations affecting ERAD susceptibility have disproportionately larger plasma consequences in long-isoform carriers than equivalent perturbations to transcriptional output.
+
+In contrast, parameters governing upstream synthesis (e.g., $\alpha_{tx}$, $\alpha_{tl}$, and $k_{deg,m}$) each maintain a sensitivity coefficient near $\pm 1$ regardless of $n$. This means they scale Lp(a) production up or down proportionally, but cannot explain why production differs so dramatically across isoforms. Similarly, $k_{fold,0}$ has a sensitivity coefficient near $+1$ for $P_{ss}$ across the full KIV-2 range, confirming that it acts as a global throughput parameter rather than a determinant of isoform-length specificity. Taken together, the sensitivity analysis supports the conclusion that the inverse KIV-2/Lp(a) relationship is encoded almost entirely in the ERAD kinetics, not in transcription or translation.
+
+The sensitivity pattern for ER apo(a) load $E_{ss}$ is the mirror image of that for $P_{ss}$: parameters that increase secretion (larger $k_{fold,0}$, smaller $\lambda$) reduce intracellular accumulation, while parameters that impair secretion drive apo(a) buildup in the ER. This reflects the fundamental proteostatic trade-off of apo(a) that is not secreted is not directly lost, but instead accumulates in the ER and must be processed by the degradation machinery. For individuals carrying long KIV-2 isoforms, the model therefore predicts not only lower circulating Lp(a) but also substantially greater ER apo(a) burden, with potential downstream consequences for hepatic stress that is not captured by plasma Lp(a) measurements alone.
+
+\subsection{Bayesian Inference and Parameter Identifiability}
+
+The Bayesian analysis confirms that both $\lambda$ and $k_{fold,0}$ are identifiable from the Rader 1994 production rate data, though with differing degrees of constraint. The posterior for $\lambda$ narrows substantially relative to the prior, shifting from a prior center of 0.07 repeat$^{-1}$ to a tighter posterior consistent with the observed $\sim$12-fold production rate gradient across the S1–S4 isoforms. The posterior for $k_{fold,0}$ is less tightly constrained, reflecting the fact that its primary effect is to scale the overall production rate rather than alter its isoform-length dependence. The four Rader data points, which are normalized to $n = 14$, provide little leverage on an absolute scaling parameters. This is an inherent identifiability limitation of fitting to relative rather than absolute production rates, and would be resolved by conditioning on absolute plasma Lp(a) concentrations from a population cohort \citep{mukamel2021protein, aric1989atherosclerosis, ad1996community, tan2018cohort, guan2015race, taylor2005toward, joshi2023heterogeneity, bild2002multi, sudlow2015uk, halldorsson2022sequences} in future work.
+
+The joint posterior for $(\lambda, k_{fold,0})$ (Figure \ref{fig:2}c) shows only modest correlation between the two parameters, indicating that the data are informative enough to partially separate their effects. The posterior predictive 95\% credible envelope encompasses all four Rader observations, and the 50\% envelope spans approximately 0.3 log-units across the physiological KIV-2 range which narrow enough to make useful predictions about isoform-specific production rates, while honestly representing the uncertainty in the underlying ERAD kinetics. Notably, the calibrated prior point estimates fall within the posterior credible region, validating the mechanistic calibration approach used to initialize the model.
+
+\subsection{Model Limitations and Sources of Error}
+
+Several simplifying assumptions warrant discussion. First, the model treats each KIV-2 repeat as contributing identically to ERAD susceptibility, implicitly assuming that all kringle domains have the same misfolding probability and the same interaction with ER chaperones. In reality, there is structural heterogeneity among the KIV types: KIV-1, KIV-3 through KIV-10, and the KIV-2 repeats differ in their disulfide bond partners and glycosylation sites \citep{schmidt2016structure}, and the exponential ERAD model is therefore an approximation of a more complex per-domain quality control process. A more granular model could assign domain-specific misfolding probabilities, though this would require per-domain kinetic measurements that are not currently available.
+
+Second, the model operates at steady state and does not account for the dynamic response of ER proteostasis to sustained apo(a) synthesis. Under conditions of high expression or long isoforms, the ER load $E_{ss}$ increases substantially (more than 100-fold from $n = 1$ to $n = 40$), which in a real hepatocyte would likely activate the unfolded protein response (UPR) and upregulate chaperone expression and ERAD capacity \citep{walter2011unfolded}. These adaptive feedbacks are not included in the present model and represent a meaningful source of divergence between model predictions and in vivo behavior at long repeat numbers.
+
+Third, the assembly Hill function parameters ($K_n = 8$, $h = 3$) were calibrated from the empirical observation that the KIV-2/Lp(a) relationship attenuates below $n \approx 12$\ \quad \citep{mukamel2021protein}, but the molecular basis of this threshold (specifically, the minimum kringle scaffold required for productive apo(a) apo(b) disulfide linkage) is not quantitatively characterized. The Hill coefficient $h = 3$ is consistent with cooperative structural behavior but is not independently constrained by data, and the model predictions at very short isoforms ($n < 5$) should therefore be interpreted with caution.
+
+Finally, the Rader 1994 dataset used for Bayesian inference comprises only four isoform-specific data points from a small number of subjects, with production rates estimated from radiolabeled tracer kinetics that carry their own measurement uncertainty. The digitized standard errors used here are approximate, and the likelihood function assumes Gaussian observation noise, which may not fully capture the heavy tails of inter-individual production rate variability.
+
+\subsection{Conclusions and Future Directions}
+
+This work presents the first quantitative ODE framework linking KIV-2 VNTR copy number to hepatic Lp(a) production through explicit mechanistic rate functions for transcription, translation, ER folding, ERAD, and Lp(a) assembly. The model recapitulates the empirically observed inverse KIV-2/Lp(a) relationship and identifies ERAD kinetics, specifically the per-repeat susceptibility coefficient $\lambda$, as the dominant determinant of isoform-length-dependent variation in apo(a) secretion. Bayesian inference confirms that $\lambda$ is well-identified from existing production rate data, while the absolute folding rate $k_{fold,0}$ would benefit from additional constraint via absolute Lp(a) concentration measurements across a wider isoform range.
+
+From a cardiovascular risk perspective, these results provide a mechanistic rationale for why KIV-2 copy number explains 40--70\% of inter-individual Lp(a) variance \citep{schmidt2016structure,utermann1987lp}. The exponential amplification of ERAD susceptibility with repeat number creates a highly nonlinear mapping from genetic variation to protein secretion, small differences in $\lambda$ — whether from coding variants in the KIV-2 domain or from variation in hepatic chaperone expression — are therefore predicted to produce clinically meaningful differences in plasma Lp(a). Our results suggests that ER proteostasis modulators, in addition to the RNA-targeting antisense oligonucleotides currently in clinical development \citep{graham2016antisense}, merit further investigation as potential Lp(a)-lowering strategies.
+
+Future extensions of this framework should incorporate: (1) dynamic feedback systems linking ER load to chaperone and ERAD capacity; (2) conditioning on absolute plasma Lp(a) concentrations from diverse population cohorts such as Hispanic Community Health Study, Jackson Heart Study, Multi-Ethnic Study of Atherosclerosis to better constrain $k_{fold,0}$ and the assembly parameters; and (3) integration with polygenic risk score frameworks that account for KIV-2 copy number as a continuous variable, building on the haplotype-phased copy number estimates produced by tools (in development) such as GRiD \citep{GRID}.
+
+\section*{RESOURCE AVAILABILITY}
+
+\subsection*{Lead contact}
+
+Requests for further information and resources should be directed to and will be fulfilled by the lead contact, Zachary Caterer (\href{mailto:ztcaterer@colorado.edu}{ztcaterer@colorado.edu}).
+
+\subsection*{Data and code availability}
+
+\begin{itemize}
+    \item   All data and code are available on GitHub: \href{https://github.com/caterer-z-t/CHEN_5150/tree/main/Final}{github.com/caterer-z-t/CHEN\_5150/Final}.  This directory contains Jupyter notebooks (\texttt{.ipynb}) for the simulations, sensitivity analyses, and figures presented in this report.
+
+    \item This report was prepared using \LaTeX{} to align with the assignment requirements. The document uses the Cell Publications \LaTeX{} template. For transparency, the complete source files for this report (including the \texttt{.tex}, \texttt{.sty}, \texttt{.bts}, and \texttt{.bib} files and compiled PDF) are available in the accompanying GitHub repository referenced above (in the \texttt{./paper} directory).
+    
+\end{itemize}
+
+\section*{ACKNOWLEDGMENTS}
+
+This work was funded by National Institute of Health and National Science Foundations via grants K01: HL157658, R01: HL172887, and NSF: 2022138.
+
+\section*{AUTHOR CONTRIBUTIONS}
+
+Conceptualization, methodology, investigation, writing, review \& editing, funding acquisition, resources, and supervision, Z.T.C.
+
+\section*{DECLARATION OF GENERATIVE AI AND AI-ASSISTED TECHNOLOGIES}
+
+Anthropic's Claude (Sonnet 4.6) was used to assist with the following tasks: 
+\begin{enumerate}
+    \item[i)] drafting initial Python code for the ODE model and Bayesian inference pipeline; 
+    \item[ii)] generating Python code used to produce Figures 1--3; 
+    \item[iii)] editing manuscript drafts for conciseness and clarity; and
+    \item[iv)] cross-validating that the manuscript's mathematical model description was consistent with the Python implementation.
+\end{enumerate}
+
+All AI-assisted content was reviewed, edited, and verified 
+by the author, who takes full responsibility for the accuracy, integrity, and final content 
+of this work.
+
+\bibliography{references}
+
+\end{document}
